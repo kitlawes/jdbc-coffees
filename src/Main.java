@@ -75,6 +75,28 @@ public class Main {
             }
             printCoffeesTable(myConnection);
 
+            System.out.println("\nInserting a new row:");
+            stmt = null;
+            try {
+                stmt = myConnection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                ResultSet uprs = stmt.executeQuery("SELECT * FROM COFFEES");
+                uprs.moveToInsertRow();
+                uprs.updateString("COF_NAME", "Kona");
+                uprs.updateInt("SUP_ID", 150);
+                uprs.updateFloat("PRICE", 10.99f);
+                uprs.updateInt("SALES", 0);
+                uprs.updateInt("TOTAL", 0);
+                uprs.insertRow();
+                uprs.beforeFirst();
+            } catch (SQLException e) {
+                printSQLException(e);
+            } finally {
+                if (stmt != null) {
+                    stmt.close();
+                }
+            }
+            printCoffeesTable(myConnection);
+
             System.out.println("\nDropping COFFEES table:");
             update = "DROP TABLE COFFEES";
             executeUpdate(myConnection, update);
