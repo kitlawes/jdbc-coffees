@@ -24,6 +24,14 @@ public class Main {
                     + "PRIMARY KEY (SUP_ID))";
             executeUpdate(myConnection, update);
 
+            System.out.println("\nPopulating SUPPLIERS table");
+            update = "insert into SUPPLIERS values(49, 'Superior Coffee', '1 Party Place', 'Mendocino', 'CA', '95460')";
+            executeUpdate(myConnection, update);
+            update = "insert into SUPPLIERS values(101, 'Acme, Inc.', '99 Market Street', 'Groundsville', 'CA', '95199')";
+            executeUpdate(myConnection, update);
+            update = "insert into SUPPLIERS values(150, 'The High Ground', '100 Coffee Lane', 'Meadows', 'CA', '93966')";
+            executeUpdate(myConnection, update);
+
             System.out.println("\nCreating COFFEES table");
             update = "create table COFFEES "
                     + "(COF_NAME varchar(32) NOT NULL, "
@@ -31,7 +39,8 @@ public class Main {
                     + "PRICE numeric(10,2) NOT NULL, "
                     + "SALES integer NOT NULL, "
                     + "TOTAL integer NOT NULL, "
-                    + "PRIMARY KEY (COF_NAME))";
+                    + "PRIMARY KEY (COF_NAME), "
+                    + "FOREIGN KEY (SUP_ID) REFERENCES SUPPLIERS (SUP_ID))";
             executeUpdate(myConnection, update);
 
             System.out.println("\nPopulating COFFEES table");
@@ -64,7 +73,7 @@ public class Main {
                             + ", " + total);
                 }
             } catch (SQLException e) {
-                e.printStackTrace();
+                printSQLException(e);
             } finally {
                 if (stmt != null) {
                     stmt.close();
@@ -75,8 +84,12 @@ public class Main {
             update = "DROP TABLE COFFEES";
             executeUpdate(myConnection, update);
 
+            System.out.println("\nDropping SUPPLIERS table:");
+            update = "DROP TABLE SUPPLIERS";
+            executeUpdate(myConnection, update);
+
         } catch (SQLException e) {
-            e.printStackTrace();
+            printSQLException(e);
         } finally {
             closeConnection(myConnection);
         }
@@ -88,7 +101,7 @@ public class Main {
             stmt = con.createStatement();
             stmt.executeUpdate(update);
         } catch (SQLException e) {
-            e.printStackTrace();
+            printSQLException(e);
         } finally {
             if (stmt != null) {
                 stmt.close();
@@ -104,8 +117,40 @@ public class Main {
                 connArg = null;
             }
         } catch (SQLException sqle) {
-            sqle.printStackTrace();
+            printSQLException(sqle);
         }
+    }
+
+    public static void printSQLException(SQLException ex) {
+        for (Throwable e : ex) {
+            if (e instanceof SQLException) {
+                if (ignoreSQLException(((SQLException) e).getSQLState()) == false) {
+                    e.printStackTrace(System.err);
+                    System.err.println("SQLState: " + ((SQLException) e).getSQLState());
+                    System.err.println("Error Code: " + ((SQLException) e).getErrorCode());
+                    System.err.println("Message: " + e.getMessage());
+                    Throwable t = ex.getCause();
+                    while (t != null) {
+                        System.out.println("Cause: " + t);
+                        t = t.getCause();
+                    }
+                }
+            }
+        }
+    }
+
+    public static boolean ignoreSQLException(String sqlState) {
+        if (sqlState == null) {
+            System.out.println("The SQL state is not defined!");
+            return false;
+        }
+        // X0Y32: Jar file already exists in schema
+        if (sqlState.equalsIgnoreCase("X0Y32"))
+            return true;
+        // 42Y55: Table already exists in schema
+        if (sqlState.equalsIgnoreCase("42Y55"))
+            return true;
+        return false;
     }
 
 }
