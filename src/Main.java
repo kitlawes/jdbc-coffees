@@ -1,4 +1,6 @@
 import java.sql.*;
+import java.util.HashMap;
+import java.util.Map;
 import java.util.Properties;
 
 public class Main {
@@ -94,6 +96,49 @@ public class Main {
                 if (stmt != null) {
                     stmt.close();
                 }
+            }
+            printCoffeesTable(myConnection);
+
+            System.out.println("\nUpdating sales of coffee per week:");
+            HashMap<String, Integer> salesCoffeeWeek = new HashMap<String, Integer>();
+            salesCoffeeWeek.put("Colombian", 175);
+            salesCoffeeWeek.put("French_Roast", 150);
+            salesCoffeeWeek.put("Espresso", 60);
+            salesCoffeeWeek.put("Colombian_Decaf", 155);
+            salesCoffeeWeek.put("French_Roast_Decaf", 90);
+            PreparedStatement updateSales = null;
+            PreparedStatement updateTotal = null;
+            try {
+                myConnection.setAutoCommit(false);
+                updateSales = myConnection.prepareStatement("update COFFEES set SALES = ? where COF_NAME = ?");
+                updateTotal = myConnection.prepareStatement("update COFFEES set TOTAL = TOTAL + ? where COF_NAME = ?");
+                for (Map.Entry<String, Integer> e : salesCoffeeWeek.entrySet()) {
+                    updateSales.setInt(1, e.getValue().intValue());
+                    updateSales.setString(2, e.getKey());
+                    updateSales.executeUpdate();
+                    updateTotal.setInt(1, e.getValue().intValue());
+                    updateTotal.setString(2, e.getKey());
+                    updateTotal.executeUpdate();
+                    myConnection.commit();
+                }
+            } catch (SQLException e) {
+                printSQLException(e);
+                if (myConnection != null) {
+                    try {
+                        System.err.print("Transaction is being rolled back");
+                        myConnection.rollback();
+                    } catch (SQLException excep) {
+                        printSQLException(excep);
+                    }
+                }
+            } finally {
+                if (updateSales != null) {
+                    updateSales.close();
+                }
+                if (updateTotal != null) {
+                    updateTotal.close();
+                }
+                myConnection.setAutoCommit(true);
             }
             printCoffeesTable(myConnection);
 
