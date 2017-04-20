@@ -13,8 +13,19 @@ public class Main {
             connectionProps.put("password", "");
             myConnection = DriverManager.getConnection("jdbc:derby:database;create=true", connectionProps);
 
+            System.out.println("\nCreating SUPPLIERS table");
+            String update = "create table SUPPLIERS "
+                    + "(SUP_ID integer NOT NULL, "
+                    + "SUP_NAME varchar(40) NOT NULL, "
+                    + "STREET varchar(40) NOT NULL, "
+                    + "CITY varchar(20) NOT NULL, "
+                    + "STATE char(2) NOT NULL, "
+                    + "ZIP char(5), "
+                    + "PRIMARY KEY (SUP_ID))";
+            executeUpdate(myConnection, update);
+
             System.out.println("\nCreating COFFEES table");
-            String update = "create table COFFEES "
+            update = "create table COFFEES "
                     + "(COF_NAME varchar(32) NOT NULL, "
                     + "SUP_ID int NOT NULL, "
                     + "PRICE numeric(10,2) NOT NULL, "
@@ -22,7 +33,7 @@ public class Main {
                     + "TOTAL integer NOT NULL, "
                     + "PRIMARY KEY (COF_NAME))";
             executeUpdate(myConnection, update);
-            
+
             System.out.println("\nPopulating COFFEES table");
             update = "insert into COFFEES values('Colombian', 00101, 7.99, 0, 0)";
             executeUpdate(myConnection, update);
