@@ -185,6 +185,29 @@ public class Main {
                 }
                 myConnection.setAutoCommit(true);
             }
+            
+            System.out.println("\nPerforming batch updates; adding new coffees");
+            stmt = null;
+            try {
+                myConnection.setAutoCommit(false);
+                stmt = myConnection.createStatement();
+                stmt.addBatch("INSERT INTO COFFEES VALUES('Amaretto', 49, 9.99, 0, 0)");
+                stmt.addBatch("INSERT INTO COFFEES VALUES('Hazelnut', 49, 9.99, 0, 0)");
+                stmt.addBatch("INSERT INTO COFFEES VALUES('Amaretto_decaf', 49, 10.99, 0, 0)");
+                stmt.addBatch("INSERT INTO COFFEES VALUES('Hazelnut_decaf', 49, 10.99, 0, 0)");
+                int[] updateCounts = stmt.executeBatch();
+                myConnection.commit();
+            } catch (BatchUpdateException b) {
+                printBatchUpdateException(b);
+            } catch (SQLException ex) {
+                printSQLException(ex);
+            } finally {
+                if (stmt != null) {
+                    stmt.close();
+                }
+                myConnection.setAutoCommit(true);
+            }
+            printCoffeesTable(myConnection);
 
             System.out.println("\nDropping COFFEES table:");
             update = "DROP TABLE COFFEES";
@@ -284,6 +307,18 @@ public class Main {
         if (sqlState.equalsIgnoreCase("42Y55"))
             return true;
         return false;
+    }
+
+    public static void printBatchUpdateException(BatchUpdateException b) {
+        System.err.println("----BatchUpdateException----");
+        System.err.println("SQLState:  " + b.getSQLState());
+        System.err.println("Message:  " + b.getMessage());
+        System.err.println("Vendor:  " + b.getErrorCode());
+        System.err.print("Update counts:  ");
+        int[] updateCounts = b.getUpdateCounts();
+        for (int i = 0; i < updateCounts.length; i++) {
+            System.err.print(updateCounts[i] + "   ");
+        }
     }
 
 }
