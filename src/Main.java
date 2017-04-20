@@ -54,23 +54,17 @@ public class Main {
             executeUpdate(myConnection, update);
             update = "insert into COFFEES values('French_Roast_Decaf', 00049, 9.99, 0, 0)";
             executeUpdate(myConnection, update);
+            printCoffeesTable(myConnection);
 
-            System.out.println("\nContents of COFFEES table:");
+            System.out.println("\nRaising coffee prices by 25%");
             Statement stmt = null;
             try {
-                stmt = myConnection.createStatement();
-                ResultSet rs = stmt.executeQuery("select COF_NAME, SUP_ID, PRICE, SALES, TOTAL from COFFEES");
-                while (rs.next()) {
-                    String coffeeName = rs.getString("COF_NAME");
-                    int supplierID = rs.getInt("SUP_ID");
-                    float price = rs.getFloat("PRICE");
-                    int sales = rs.getInt("SALES");
-                    int total = rs.getInt("TOTAL");
-                    System.out.println(coffeeName
-                            + ", " + supplierID
-                            + ", " + price
-                            + ", " + sales
-                            + ", " + total);
+                stmt = myConnection.createStatement(ResultSet.TYPE_SCROLL_SENSITIVE, ResultSet.CONCUR_UPDATABLE);
+                ResultSet uprs = stmt.executeQuery("SELECT * FROM COFFEES");
+                while (uprs.next()) {
+                    float f = uprs.getFloat("PRICE");
+                    uprs.updateFloat("PRICE", f * 1.25f);
+                    uprs.updateRow();
                 }
             } catch (SQLException e) {
                 printSQLException(e);
@@ -79,6 +73,7 @@ public class Main {
                     stmt.close();
                 }
             }
+            printCoffeesTable(myConnection);
 
             System.out.println("\nDropping COFFEES table:");
             update = "DROP TABLE COFFEES";
@@ -100,6 +95,33 @@ public class Main {
         try {
             stmt = con.createStatement();
             stmt.executeUpdate(update);
+        } catch (SQLException e) {
+            printSQLException(e);
+        } finally {
+            if (stmt != null) {
+                stmt.close();
+            }
+        }
+    }
+
+    public static void printCoffeesTable(Connection con) throws SQLException {
+        System.out.println("\nContents of COFFEES table:");
+        Statement stmt = null;
+        try {
+            stmt = con.createStatement();
+            ResultSet rs = stmt.executeQuery("select COF_NAME, SUP_ID, PRICE, SALES, TOTAL from COFFEES");
+            while (rs.next()) {
+                String coffeeName = rs.getString("COF_NAME");
+                int supplierID = rs.getInt("SUP_ID");
+                float price = rs.getFloat("PRICE");
+                int sales = rs.getInt("SALES");
+                int total = rs.getInt("TOTAL");
+                System.out.println(coffeeName
+                        + ", " + supplierID
+                        + ", " + price
+                        + ", " + sales
+                        + ", " + total);
+            }
         } catch (SQLException e) {
             printSQLException(e);
         } finally {
