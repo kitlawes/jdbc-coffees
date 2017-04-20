@@ -142,6 +142,50 @@ public class Main {
             }
             printCoffeesTable(myConnection);
 
+            System.out.println("\nModifying prices by percentage");
+            String coffeeName = "Colombian";
+            float priceModifier = 0.10f;
+            float maximumPrice = 9.00f;
+            myConnection.setAutoCommit(false);
+            Statement getPrice = null;
+            Statement updatePrice = null;
+            ResultSet rs = null;
+            String query = "SELECT COF_NAME, PRICE FROM COFFEES WHERE COF_NAME = '" + coffeeName + "'";
+            try {
+                Savepoint save1 = myConnection.setSavepoint();
+                getPrice = myConnection.createStatement(ResultSet.TYPE_SCROLL_INSENSITIVE, ResultSet.CONCUR_READ_ONLY);
+                updatePrice = myConnection.createStatement();
+                if (!getPrice.execute(query)) {
+                    System.out.println("Could not find entry for coffee named " + coffeeName);
+                } else {
+                    rs = getPrice.getResultSet();
+                    rs.first();
+                    float oldPrice = rs.getFloat("PRICE");
+                    float newPrice = oldPrice + (oldPrice * priceModifier);
+                    System.out.println("Old price of " + coffeeName + " is " + oldPrice);
+                    System.out.println("New price of " + coffeeName + " is " + newPrice);
+                    System.out.println("Performing update...");
+                    updatePrice.executeUpdate("UPDATE COFFEES SET PRICE = " + newPrice + " WHERE COF_NAME = '" + coffeeName + "'");
+                    printCoffeesTable(myConnection);
+                    if (newPrice > maximumPrice) {
+                        System.out.println("\nThe new price, " + newPrice + ", is greater than the maximum " + "price, " + maximumPrice + ". Rolling back the transaction...");
+                        myConnection.rollback(save1);
+                        printCoffeesTable(myConnection);
+                    }
+                    myConnection.commit();
+                }
+            } catch (SQLException e) {
+                printSQLException(e);
+            } finally {
+                if (getPrice != null) {
+                    getPrice.close();
+                }
+                if (updatePrice != null) {
+                    updatePrice.close();
+                }
+                myConnection.setAutoCommit(true);
+            }
+
             System.out.println("\nDropping COFFEES table:");
             update = "DROP TABLE COFFEES";
             executeUpdate(myConnection, update);
